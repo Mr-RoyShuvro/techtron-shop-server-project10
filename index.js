@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -49,17 +50,54 @@ async function run() {
             res.send(result);
         });
 
+        /* For update a product */
+        app.get('/update/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            console.log(query)
+            const result = await productCollection.findOne(query);
+            res.send(result);
+        });
+        app.put('/update/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            console.log(filter)
+            const product = req.body;
+            const updatedProduct = {
+                $set: {
+                    imageURL: product.imageURL,
+                    name: product.name,
+                    brand: product.brand,
+                    type: product.type,
+                    price: product.price,
+                    rating: product.rating,
+                    description: product.description,
+                }
+            }
+            const result = await productCollection.updateOne(filter, updatedProduct, options);
+            res.send(result);
+        });
+
         /* for cart collection */
-        app.post('/cart', async(req, res)=>{
+        app.post('/cart', async (req, res) => {
             const product = req.body;
             // console.log(product);
             const result = await cartCollection.insertOne(product);
             res.send(result);
         });
 
-        app.get('/cart', async(req, res)=>{
+        app.get('/cart', async (req, res) => {
             const query = cartCollection.find();
             const result = await query.toArray();
+            res.send(result);
+        });
+        /* Remove a cart from my cart */
+        app.delete('/cart/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: id };
+            const result = await cartCollection.deleteOne(query);
             res.send(result);
         });
 
@@ -73,8 +111,6 @@ async function run() {
     }
 }
 run().catch(console.dir);
-
-
 
 
 app.get('/', (req, res) => {
